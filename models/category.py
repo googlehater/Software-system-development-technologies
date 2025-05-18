@@ -14,4 +14,4 @@ class Category(Base):
     category_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50))
 
-    products: Mapped[List['Product']] = relationship(back_populates='category')
+    products: Mapped[List['Product']] = relationship(back_populates='category', lazy="joined")

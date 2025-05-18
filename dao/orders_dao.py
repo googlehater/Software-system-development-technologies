@@ -4,7 +4,7 @@ from models.product import Product
 from .base_dao import BaseDAO
 
 
-class CategoryDAO(BaseDAO):
+class OrderDAO(BaseDAO):
     def __init__(self, session: Session):
         super().__init__(session, Category)
 

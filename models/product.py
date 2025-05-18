@@ -8,6 +8,7 @@ from .base import Base
 if TYPE_CHECKING:
     from .category import Category
     from .brand import Brand
+    from .order_cart import OrderCart
 
 
 class Product(Base):
@@ -18,12 +19,13 @@ class Product(Base):
     description: Mapped[str] = mapped_column(Text())
     price: Mapped[float] = mapped_column(Numeric(10, 2))
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    category_id: Mapped[int] = mapped_column(ForeignKey('categories.categorie_id', ondelete='CASCADE')) 
+    category_id: Mapped[int] = mapped_column(ForeignKey('categories.category_id', ondelete='CASCADE')) 
     brand_id: Mapped[int] = mapped_column(ForeignKey('brands.brand_id', ondelete='CASCADE'))
-    create_at: Mapped[date] = mapped_column(Date, default=date.today)
+    create_at: Mapped[date] = mapped_column(Date, default=date.today())
 
-    category: Mapped['Category'] = relationship(back_populates='products')
-    brand: Mapped['Brand'] = relationship(back_populates='products')
+    category: Mapped['Category'] = relationship(back_populates='products', lazy='joined')
+    brand: Mapped['Brand'] = relationship(back_populates='products', lazy='joined')
+    order_cart: Mapped[list["OrderCart"]] = relationship(back_populates='product')
 
     def __repr__(self):  # вывод информации
         return f'''product(id={self.product_id})

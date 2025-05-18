@@ -1,0 +1,35 @@
+Traceback (most recent call last):
+  File "C:\Users\1\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py", line 227, in _init_items
+    spwd = item._set_parent_with_dispatch
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'builtin_function_or_method' object has no attribute '_set_parent_with_dispatch'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\uni\TRPS\lr_2\main.py", line 33, in <module>
+    from models.order import Order
+  File "d:\uni\TRPS\lr_2\models\order.py", line 18, in <module>
+    class Order(Base):
+    ...<20 lines>...
+            self.notify(self.order_id, new_status)
+  File "d:\uni\TRPS\lr_2\models\order.py", line 23, in Order
+    order_date: Mapped[date] = mapped_column(Date, date.today)
+                               ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\_orm_constructors.py", line 347, in mapped_column
+    return MappedColumn(
+        __name_pos,
+    ...<28 lines>...
+        **kw,
+    )
+  File "C:\Users\1\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\orm\properties.py", line 585, in __init__
+    self.column = cast("Column[_T]", Column(*arg, **kw))
+                                     ~~~~~~^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py", line 2168, in __init__
+    self._init_items(*cast(_typing_Sequence[SchemaItem], l_args))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\1\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py", line 229, in _init_items
+    raise exc.ArgumentError(
+    ...<2 lines>...
+    ) from err
+sqlalchemy.exc.ArgumentError: 'SchemaItem' object, such as a 'Column' or a 'Constraint' expected, got <built-in method today of type object at 0x00007FFE386D15B0>

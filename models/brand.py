@@ -15,4 +15,4 @@ class Brand(Base):
     name: Mapped[str] = mapped_column(String(100))
     country: Mapped[str] = mapped_column(String(100))
 
-    products: Mapped[list['Product']] = relationship(back_populates='brand')
+    products: Mapped[list['Product']] = relationship(back_populates='brand', lazy='joined')

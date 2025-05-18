@@ -19,4 +19,4 @@ class Customer(Base):
     phone: Mapped[str] = mapped_column(String(20))
     registration_date: Mapped[date] = mapped_column(Date, default=date.today)
 
-    order: Mapped[List['Order']] = relationship(back_populates='customer')
+    orders: Mapped[List['Order']] = relationship(back_populates='customer', lazy='selectin')

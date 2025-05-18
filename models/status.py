@@ -1,6 +1,6 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .base import Base
 
@@ -14,4 +14,4 @@ class Status(Base):
     status_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     status: Mapped[str] = mapped_column(String(50))
 
-    order: Mapped[Order] = relationship(back_populates='status')
+    orders: Mapped[List['Order']] = relationship(back_populates='status')
