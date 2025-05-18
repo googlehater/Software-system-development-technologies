@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from models.category import Category
 from models.product import Product
 from .base_dao import BaseDAO
+from models.order import Order
 
 
 class OrderDAO(BaseDAO):
@@ -15,5 +16,6 @@ class OrderDAO(BaseDAO):
                 .filter(Category.name.ilike(f'%{category_name}%'))
                 .all()
                 )
-
-
+    
+    def get_all_orders(self) -> list[Order]:
+        return self.session.query(Order).all()

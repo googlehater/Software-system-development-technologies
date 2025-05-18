@@ -1,8 +1,9 @@
 from sqlalchemy import String, ForeignKey, Text, Numeric, Integer, Date
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from datetime import date, timedelta
 from patterns.observer.observer import Subject
-from typing import TYPE_CHECKING
+from patterns.state.order_state import OrderState
+from typing import TYPE_CHECKING, Optional
 
 from models.base import Base
 
@@ -37,9 +38,16 @@ class Order(Base):
     payment_method: Mapped['PaymentMethod'] = relationship(back_populates='orders')
     order_cart: Mapped[list["OrderCart"]] = relationship(back_populates='order')
 
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._subject = Subject()
+        self._state: Optional['OrderState'] = None
+    
+    @property
+    def state(self) -> 'OrderState':
+        if self._state is None:
+            self._init_state()
+        return self._state
 
     def attach(self, observer):
         self._subject.attach(observer)
@@ -61,3 +69,16 @@ class Order(Base):
         session.add(self)
         session.commit()
         self.notify(self.order_id, new_status)
+
+    def _init_state(self):
+        """л инициализация состояния"""
+        from patterns.state.state_factory import StateFactory
+        self._state = StateFactory.create(self.status.status)
+    
+    def next_status(self, session: Session):
+        self.state.next(self, session)
+        session.commit()
+    
+    def prev_status(self, session: Session):
+        self.state.prev(self, session)
+        session.commit()

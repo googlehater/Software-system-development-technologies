@@ -21,7 +21,7 @@ class Product(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.category_id', ondelete='CASCADE')) 
     brand_id: Mapped[int] = mapped_column(ForeignKey('brands.brand_id', ondelete='CASCADE'))
-    create_at: Mapped[date] = mapped_column(Date, default=date.today())
+    created_at: Mapped[date] = mapped_column(Date, default=date.today())
 
     category: Mapped['Category'] = relationship(back_populates='products', lazy='joined')
     brand: Mapped['Brand'] = relationship(back_populates='products', lazy='joined')
