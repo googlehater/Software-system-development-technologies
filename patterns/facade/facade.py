@@ -5,16 +5,23 @@ from dao.customers_dao import CustomerDAO
 from patterns.observer import NotificationService 
 from patterns.strategy.strategy import PaymentStrategy
 from patterns.strategy.strategy import CardPayment
+from patterns.strategy.strategy import CashByDelivery
+from patterns.strategy.strategy import InstallmentPlanPayment
 
 
 class OrderFacade:
-    
     def __init__(self, session):
         self.order_dao = OrderDAO(session)
         self.product_dao = ProductDAO(session)
         self.customer_dao = CustomerDAO(session)
         self.payment_dao = PaymentStrategy(CardPayment)
         self.notifier = NotificationService()
+        self._payment_strategies = {
+            'card': CardPayment(),
+            'cash': CashByDelivery(),
+            'installpayment': InstallmentPlanPayment()
+        }
+        self._current_strategy = self._payment_strategies['card']  # по умолчанию
 
     def place_order(self, customer_id: int, product_ids: list[int]) -> bool:
         """Оформление заказа в один клик.
@@ -64,3 +71,9 @@ class OrderFacade:
             raise ValueError(f"Товар '{product_name}' не найден")
         
         return self.add_to_cart(product.product_id, quantity)  # Используем ID внутри
+    
+    def set_payment_method(self, method: str):
+        self._current_strategy = self._payment_strategies.get(method)
+        if not self._current_strategy:
+            raise ValueError(f'Неизвестный метод оплаты: {method}')
+        

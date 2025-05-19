@@ -40,52 +40,6 @@ def main():
     order.next_status(session)  # prooving -> paid
     order.next_status(session)  # paid -> shipped
     order.prev_status(session)  # shipped -> paid
-
-
-
-
-    # # Создание заказ
-    # order = Order(customer_id=1,
-    #               total_amount=363.00,
-    #               address="ул. 2-я Оранжерейная д.19",
-    #               status_id=1,
-    #               payment_method_id=1)
-    # session.add(order)
-    # session.commit()
-
-    # order1 = Order(customer_id=1,
-    #               total_amount=666.00,
-    #               address="ул. Тимирязева д.4",
-    #               status_id=1,
-    #               payment_method_id=3)
-    # session.add(order1)
-    # session.commit()
-    
-    # # Создание наблюдателей
-    # email_notifier = EmailNotification()
-    # sms_notifier = SMSNotification()
-    
-    # # Подписание на заказ
-    # order.attach(email_notifier)
-    # order.attach(sms_notifier)
-
-    # order1.attach(email_notifier)
-    # order1.attach(sms_notifier)
-
-    
-
-    # order.set_status('prooving', session)
-    # order1.set_status('prooving', session)
-    # session.commit
-
-    # order.set_status('shipped', session)
-    # session.commit
-    
-
-    # order.detach(sms_notifier)
-    # order1.detach(sms_notifier)
-
-    # order.set_status("shipped", session)
     
     session.close()
 

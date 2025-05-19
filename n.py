@@ -1,8 +1,9 @@
 from dao.products_dao import ProductDAO
 from dao.orders_dao import OrderDAO
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session 
 from dao.products_dao import ProductDAO
+from patterns.strategy.strategy import CardPayment, CashByDelivery, InstallmentPlanPayment
 
 
 #string_con = f"{os.getenv('DB_DRIVER')}://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
@@ -48,8 +49,8 @@ def add_product():
     from models.brand import Brand
     from models.category import Category
 
-    console = Console()
 
+    console = Console()
 
     def show_brands():
         brands = session.query(Brand).all()
@@ -68,7 +69,7 @@ def add_product():
         table.add_column("Название", style="green")
         for category in categories:
             table.add_row(str(category.category_id), category.name)
-            console.print(table)
+        console.print(table)
 
 
 
@@ -85,8 +86,51 @@ def add_product():
         quantity=int(input('Введите количество: ')),
         category_id=int(input('Введите ID категории: ')),
         brand_id=int(input(f'Введите ID бренда: '))
-
     )
+
+    # Реализовать показ только что созданного товара (мб + отмену действия)
+
+def add_order(): # доделать
+    # тут будет использован паттерн фасад
+    from patterns.facade.facade import OrderFacade
+    from models.customers import Customer
+    from rich.table import Table
+    from rich.console import Console
+
+
+
+    customers = session.query(Customer).all()
+    console = Console()
+    table = Table(title='Список клиентов: ')
+    table.add_column('ID', style='cyan')
+    table.add_column('Имя')
+    table.add_column('Фамилия')
+    table.add_column('email: ', style='green')
+    table.add_column('phone: ', style='magenta')
+    for customer in customers:
+        table.add_row(
+            str(customer.customer_id), 
+            customer.first_name, 
+            customer.last_name, 
+            customer.email, 
+            customer.phone
+            )
+    console.print(table)
+
+
+
+
+
+
+
+
+
+    customer_id = int(input('Ввердите ID клиента: '))
+    # product_id = 
+
+    facade = OrderFacade()
+    facade.place_order()
+
 
 def add_menu():
     while True:
@@ -103,7 +147,7 @@ def add_menu():
         if choice == 1:
             add_product()
         elif choice == 2:
-            pass
+            add_order()
         elif choice == 3:
             pass
         elif choice == 4:
@@ -113,6 +157,91 @@ def add_menu():
         elif choice == 0:
             break
 
+def pay_order():
+    from rich.table import Table
+    from rich.console import Console
+    from rich.prompt import Prompt 
+    from dao.orders_dao import OrderDAO
+    from models.customers import Customer
+    from models.order import Order
+    from patterns.observer.observer import EmailNotification, SMSNotification
+
+
+    console = Console()
+    order_dao = OrderDAO(session)
+    orders = order_dao.get_all_orders()
+
+    def show_orders():
+        '''Показывает заказы, доступные для оплаты'''
+
+        orders = session.query(Order).filter(Order.status_id != 3).all()
+        table = Table(title="Orders")
+        table.add_column("ID заказа", style="cyan")
+        table.add_column(f"Клиент: ")
+        table.add_column("Дата заказа: ")
+        table.add_column("Сумма: ")
+        table.add_column("Статус: ")
+        table.add_column("Метод оплаты: ")
+        for order in orders:
+            table.add_row(
+                str(order.order_id),
+                f'{order.customer.first_name}, {order.customer.last_name}\n{order.customer.email}',
+                order.order_date.strftime("%d.%m.%Y"),
+                f'{order.total_amount:.2f}',
+                order.status.status,
+                order.payment_method.method_name
+            )
+        console.print(table)
+        return orders
+    
+    
+        
+
+    payable_orders = show_orders()
+    print(f'\nДоступные заказы:\n')
+    
+    order_id = Prompt.ask(
+        '[bold]Введите ID заказа, который хотите оплатить[/bold]',
+        choices=[str(o.order_id) for o in payable_orders]
+    )
+    order = next(o for o in payable_orders if o.order_id == int(order_id))
+
+    print('Выберите метод оплаты:')
+    print('1. card\n2. cash\n3. InstallPayment\n')
+    payment_method = int(input('Ввод: '))
+
+    if payment_method == 1:
+        order.set_payment_strategy(CardPayment())
+    elif payment_method == 2:
+        order.set_payment_strategy(CashByDelivery())
+    elif payment_method == 3:
+        order.set_payment_strategy(InstallmentPlanPayment())
+    else: 
+       print(f'некорректно выбран метод. По умолчанию будет использоваться Card')
+
+
+    '''Observer'''
+    # создаем наблюдателей
+    email_notifier = EmailNotification()
+    sms_notifier = SMSNotification()
+
+    # подписываем наблюдателей
+    order.attach(email_notifier)
+    order.attach(sms_notifier)
+
+
+    # Подтверждение
+    confirm = Prompt.ask(
+        f"Оплатить заказ #{order_id} на сумму {order.total_amount:.2f}?",
+        choices=["y", "n"],
+        default="n"
+    )
+
+    if confirm == 'y':
+        order.next_status(session)
+        console.print(f'\n[green]Заказ №{order_id} успешно оплачен[/green]\n')
+    else:
+        console.print(f'[red]Операция отменена![/red]')
 
 def main_menu():
     try:
@@ -120,7 +249,8 @@ def main_menu():
             print("\n===Главное меню===")
             print("1. Показать товары")
             print("2. Просмотр текущих заказов")
-            print("3. Добавить...")
+            print("3. Оплатить заказ")
+            print("4. Добавить...")
             print("0. Выход\n")
 
             choice = input("Выберите: ")
@@ -130,9 +260,9 @@ def main_menu():
             elif choice == "2":
                 show_orders()
             elif choice == "3":
-                add_menu()
+                pay_order()
             elif choice == "4":
-                SystemFacade.list_records()
+                add_menu()
             elif choice == "0":
                 break
     finally:
