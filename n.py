@@ -94,6 +94,7 @@ def add_order(): # доделать
     # тут будет использован паттерн фасад
     from patterns.facade.facade import OrderFacade
     from models.customers import Customer
+    from models.product import Product
     from rich.table import Table
     from rich.console import Console
 
@@ -118,18 +119,40 @@ def add_order(): # доделать
     console.print(table)
 
 
+    products = session.query(Product).all()
+    table = Table(title='Доступные товары')
+    table.add_column('ID', style='cyan')
+    table.add_column('Название')
+    table.add_column('Цена')
+    for product in products:
+        table.add_row(
+            str(product.product_id),
+            product.name,
+            str(product.price)
+        )
+    console.print(table)
 
+    customer_id1 = int(input('Введите ID клиента: '))
+    print(f'Введите ID товара или 0 для завершения: ')
+    product_ids = []
+    while True:
+        choice = int(input())
+        if choice == 0:
+            break
 
+        product_ids.append(choice)
 
+    address = input('Введите адрес доставки: ')
+    
+    facade = OrderFacade(session)
 
+    facade.place_order(
+        customer_id=customer_id1,
+        product_ids=product_ids,
+        address=address
+    )
+    print('good')
 
-
-
-    customer_id = int(input('Ввердите ID клиента: '))
-    # product_id = 
-
-    facade = OrderFacade()
-    facade.place_order()
 
 
 def add_menu():
@@ -218,7 +241,6 @@ def pay_order():
         order.set_payment_strategy(InstallmentPlanPayment())
     else: 
        print(f'некорректно выбран метод. По умолчанию будет использоваться Card')
-
 
     '''Observer'''
     # создаем наблюдателей

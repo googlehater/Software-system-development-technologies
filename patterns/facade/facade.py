@@ -2,8 +2,7 @@ from datetime import datetime
 from dao.orders_dao import OrderDAO
 from dao.products_dao import ProductDAO
 from dao.customers_dao import CustomerDAO
-from patterns.observer import NotificationService 
-from patterns.strategy.strategy import PaymentStrategy
+from patterns.observer.observer import EmailNotification
 from patterns.strategy.strategy import CardPayment
 from patterns.strategy.strategy import CashByDelivery
 from patterns.strategy.strategy import InstallmentPlanPayment
@@ -11,11 +10,13 @@ from patterns.strategy.strategy import InstallmentPlanPayment
 
 class OrderFacade:
     def __init__(self, session):
+        self.session = session
         self.order_dao = OrderDAO(session)
         self.product_dao = ProductDAO(session)
         self.customer_dao = CustomerDAO(session)
-        self.payment_dao = PaymentStrategy(CardPayment)
-        self.notifier = NotificationService()
+        self.payment_dao = CardPayment()
+        self.notifier = EmailNotification()
+        # strategy
         self._payment_strategies = {
             'card': CardPayment(),
             'cash': CashByDelivery(),
@@ -23,7 +24,7 @@ class OrderFacade:
         }
         self._current_strategy = self._payment_strategies['card']  # по умолчанию
 
-    def place_order(self, customer_id: int, product_ids: list[int]) -> bool:
+    def place_order(self, customer_id: int, product_ids: list[int], address: str) -> bool:
         """Оформление заказа в один клик.
         
         Шаги:
@@ -32,35 +33,42 @@ class OrderFacade:
         3. Выполнить оплату
         4. Отправить уведомление"""
         try: 
+            products = []
+            total_amount = 0.0
             # 1
             for product_id in product_ids:
                 product = self.product_dao.get_by_id(product_id)
                 if product.quantity < 1:
                      raise ValueError(f"Товар {product_id} закончился")
+                products.append(product)
+                total_amount += float(product.price)
 
-            # 2
-            order = self.order_dao.create(
-                customer_id=customer_id,
-                order_date=datetime.now(),
-                product_ids=product_ids
-            )
+            # 2 создание заказа
+            order_data = {
+                'customer_id': customer_id,
+                'order_date': datetime.today(),
+                'total_amount': total_amount,
+                'address': address,
+                'status_id': 1,  # Статус "Новый"
+                'payment_method_id': 1
+            }
 
-            # 3
-            customer = self.customer_dao.get_by_id(customer_id)
-            total = sum(self.product_dao.get_by_id(pid).price for pid in product_ids)
-            payment_success = self.payment_strategy.pay(customer.email, total)
-
-            # 4 
-            if payment_success:
-                self.notifier.notify(
-                    recipient=customer.email,
-                    message=f'Заказ №{order.order_id} успешно оформлен. Сумма: {total} руб.'
+            order = self.order_dao.create(**order_data)
+            
+            # 3 Добавление товара в заказ
+            for product in products:
+                self.order_dao.add_product_to_order(
+                    order_id=order.order_id,
+                    product_id=product.product_id,
+                    quantity=1,
+                    price=product.price
                 )
-                return True
-            return False
-
+               
+            return True
+        
         except Exception as e:
-            print(f"Ошибка при оформлении заказа: {e}")
+            self.session.rollback()
+            print(f"[Ошибка] {str(e)}")
             return False
     
 

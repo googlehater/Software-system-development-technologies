@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List
 
 
-# observer 
 class Observer(ABC):
     @abstractmethod
     def update(self, order_id: int, status: str):
